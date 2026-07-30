@@ -173,9 +173,11 @@ class Consent
         $moreInfo = $strings['preferencesModal']['moreInfo']['description'];
 
         if ($privacyUrl !== null) {
+            // A separate label: "privacyLabel" is a nav title, which does not
+            // read as German inside a sentence ("in unserer Datenschutz").
             $moreInfo = str_replace(
                 '{privacy}',
-                '<a href="' . $privacyUrl . '">' . $strings['ui']['privacyLabel'] . '</a>',
+                '<a href="' . $privacyUrl . '">' . $strings['ui']['privacyProse'] . '</a>',
                 $moreInfo
             );
         } else {
@@ -189,9 +191,25 @@ class Consent
             'description' => $moreInfo,
         ];
 
+        // Name the categories this site actually uses instead of shipping a
+        // description that promises a marketing section which is not there.
+        $titles = array_map(
+            fn (string $category): string => $strings['categories'][$category]['title'],
+            static::categories()
+        );
+
+        // {{revisionMessage}} is the library's own placeholder and resolves to an
+        // empty string unless the revision changed. Appended here so a site that
+        // overrides the description cannot accidentally drop it.
+        $description = str_replace(
+            '{categories}',
+            static::joinList($titles, $strings['ui']['listConjunction']),
+            $strings['consentModal']['description']
+        ) . ' {{revisionMessage}}';
+
         $consentModal = [
             'title' => $strings['consentModal']['title'],
-            'description' => $strings['consentModal']['description'],
+            'description' => $description,
             'acceptAllBtn' => $strings['consentModal']['acceptAllBtn'],
             'acceptNecessaryBtn' => $strings['consentModal']['acceptNecessaryBtn'],
             'showPreferencesBtn' => $strings['consentModal']['showPreferencesBtn'],
@@ -214,6 +232,20 @@ class Consent
                 'sections' => $sections,
             ],
         ];
+    }
+
+    /**
+     * "a, b und c" — used to list the active categories in the banner text.
+     */
+    protected static function joinList(array $items, string $conjunction): string
+    {
+        if (count($items) < 2) {
+            return implode('', $items);
+        }
+
+        $last = array_pop($items);
+
+        return implode(', ', $items) . ' ' . $conjunction . ' ' . $last;
     }
 
     /**
@@ -262,6 +294,88 @@ class Consent
         }
 
         return $signals;
+    }
+
+    /**
+     * Host → display name for the embed placeholder. Anything unknown falls
+     * back to the bare host.
+     */
+    public const SERVICES = [
+        'google.com/maps' => 'Google Maps',
+        'maps.google.com' => 'Google Maps',
+        'youtube.com' => 'YouTube',
+        'youtube-nocookie.com' => 'YouTube',
+        'youtu.be' => 'YouTube',
+        'vimeo.com' => 'Vimeo',
+        'open.spotify.com' => 'Spotify',
+        'soundcloud.com' => 'SoundCloud',
+        'facebook.com' => 'Meta',
+        'instagram.com' => 'Instagram',
+        'twitter.com' => 'X',
+        'x.com' => 'X',
+        'calendly.com' => 'Calendly',
+    ];
+
+    public static function serviceName(string $url): string
+    {
+        $host = parse_url($url, PHP_URL_HOST) ?: '';
+        $path = parse_url($url, PHP_URL_PATH) ?: '';
+        $needle = $host . $path;
+
+        foreach (static::SERVICES as $match => $name) {
+            if (str_contains($needle, $match) === true) {
+                return $name;
+            }
+        }
+
+        return preg_replace('/^www\./', '', $host) ?: '';
+    }
+
+    /**
+     * Wrap third-party iframes in the consent gate.
+     *
+     * Registered on `kirbytext:after`, so iframes editors paste into content are
+     * gated without touching the content files — the only way to cover embeds
+     * that are already live in production.
+     */
+    public static function gateIframes(string $html): string
+    {
+        if (str_contains($html, '<iframe') === false) {
+            return $html;
+        }
+
+        $category = static::option('gateKirbytextCategory', 'external');
+
+        if (in_array($category, static::categories(), true) === false) {
+            return $html;
+        }
+
+        $siteHost = parse_url(App::instance()->url(), PHP_URL_HOST);
+
+        return preg_replace_callback(
+            '#<iframe\b[^>]*>(?:.*?</iframe>)?#is',
+            function (array $match) use ($category, $siteHost): string {
+                $iframe = $match[0];
+
+                if (preg_match('#\bsrc\s*=\s*["\']([^"\']+)["\']#i', $iframe, $src) !== 1) {
+                    return $iframe;
+                }
+
+                $host = parse_url($src[1], PHP_URL_HOST);
+
+                // Same-origin and relative embeds are ours to serve.
+                if ($host === null || $host === $siteHost) {
+                    return $iframe;
+                }
+
+                return snippet('consent/placeholder', [
+                    'category' => $category,
+                    'service' => static::serviceName($src[1]),
+                    'html' => $iframe,
+                ], return: true);
+            },
+            $html
+        );
     }
 
     /**

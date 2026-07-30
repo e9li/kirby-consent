@@ -3,7 +3,7 @@
 return [
     'consentModal' => [
         'title' => 'We use cookies',
-        'description' => 'Necessary cookies are required to operate this website. Everything else — statistics, marketing and external content such as maps or videos — is only set with your consent. You can allow each category individually and change or withdraw your choice at any time via “Cookie settings” in the footer.',
+        'description' => 'Necessary cookies are required to operate this website. Everything else — {categories} — is only set with your consent. You can allow each category individually and change or withdraw your choice at any time via “Cookie settings” in the footer.',
         'acceptAllBtn' => 'Accept all',
         'acceptNecessaryBtn' => 'Reject all',
         'showPreferencesBtn' => 'Settings',
@@ -44,8 +44,10 @@ return [
         ],
     ],
     'ui' => [
+        'listConjunction' => 'and',
         'settingsLink' => 'Cookie settings',
         'privacyLabel' => 'Privacy',
+        'privacyProse' => 'privacy policy',
         'imprintLabel' => 'Imprint',
         'placeholderTitle' => 'External content from {service}',
         'placeholderText' => 'Displaying this content establishes a connection to {service}. Personal data such as your IP address may be transferred to the provider.',

@@ -3,7 +3,7 @@
 return [
     'consentModal' => [
         'title' => 'Nous utilisons des cookies',
-        'description' => 'Les cookies nécessaires sont indispensables au fonctionnement de ce site. Tout le reste – statistiques, marketing et contenus externes tels que cartes ou vidéos – n’est activé qu’avec votre consentement. Vous pouvez autoriser chaque catégorie séparément et modifier ou retirer votre choix à tout moment via « Paramètres des cookies » en pied de page.',
+        'description' => 'Les cookies nécessaires sont indispensables au fonctionnement de ce site. Tout le reste – {categories} – n’est activé qu’avec votre consentement. Vous pouvez autoriser chaque catégorie séparément et modifier ou retirer votre choix à tout moment via « Paramètres des cookies » en pied de page.',
         'acceptAllBtn' => 'Tout accepter',
         'acceptNecessaryBtn' => 'Tout refuser',
         'showPreferencesBtn' => 'Paramètres',
@@ -44,8 +44,10 @@ return [
         ],
     ],
     'ui' => [
+        'listConjunction' => 'et',
         'settingsLink' => 'Paramètres des cookies',
         'privacyLabel' => 'Protection des données',
+        'privacyProse' => 'politique de confidentialité',
         'imprintLabel' => 'Mentions légales',
         'placeholderTitle' => 'Contenu externe de {service}',
         'placeholderText' => 'L’affichage de ce contenu établit une connexion avec {service}. Des données personnelles, telles que votre adresse IP, peuvent être transmises au fournisseur.',

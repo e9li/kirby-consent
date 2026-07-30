@@ -3,7 +3,7 @@
 return [
     'consentModal' => [
         'title' => 'Wir verwenden Cookies',
-        'description' => 'Notwendige Cookies sind für den Betrieb dieser Website erforderlich. Alles Weitere – Statistik, Marketing und externe Inhalte wie Karten oder Videos – setzen wir nur mit Ihrer Einwilligung. Sie können jede Kategorie einzeln zulassen und Ihre Wahl jederzeit über «Cookie-Einstellungen» im Seitenfuss ändern oder widerrufen.',
+        'description' => 'Notwendige Cookies sind für den Betrieb dieser Website erforderlich. Alles Weitere – {categories} – setzen wir nur mit Ihrer Einwilligung. Sie können jede Kategorie einzeln zulassen und Ihre Wahl jederzeit über «Cookie-Einstellungen» im Seitenfuss ändern oder widerrufen.',
         'acceptAllBtn' => 'Alle akzeptieren',
         'acceptNecessaryBtn' => 'Alle ablehnen',
         'showPreferencesBtn' => 'Einstellungen',
@@ -44,8 +44,10 @@ return [
         ],
     ],
     'ui' => [
+        'listConjunction' => 'und',
         'settingsLink' => 'Cookie-Einstellungen',
         'privacyLabel' => 'Datenschutz',
+        'privacyProse' => 'Datenschutzerklärung',
         'imprintLabel' => 'Impressum',
         'placeholderTitle' => 'Externer Inhalt von {service}',
         'placeholderText' => 'Um diesen Inhalt anzuzeigen, wird eine Verbindung zu {service} aufgebaut. Dabei können Personendaten, etwa Ihre IP-Adresse, an den Anbieter übermittelt werden.',

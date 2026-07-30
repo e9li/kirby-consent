@@ -45,9 +45,24 @@ App::plugin('e9li/kirby-consent', [
             'external' => [],
         ],
 
+        // Wrap third-party iframes in editor content (kirbytext) in the consent
+        // gate. Covers embeds that are already live in production, which no
+        // template change can reach.
+        'gateKirbytext' => true,
+        'gateKirbytextCategory' => 'external',
+
         // Per-language string overrides, deep-merged over the plugin defaults:
         // 'translations' => ['de' => ['consentModal' => ['title' => '…']]]
         'translations' => [],
+    ],
+    'hooks' => [
+        'kirbytext:after' => function (string $text) {
+            if (E9li\Consent\Consent::option('gateKirbytext') !== true) {
+                return $text;
+            }
+
+            return E9li\Consent\Consent::gateIframes($text);
+        },
     ],
     'snippets' => [
         'consent/head' => __DIR__ . '/snippets/consent/head.php',

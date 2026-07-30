@@ -1,0 +1,87 @@
+@import "vanilla-cookieconsent/dist/cookieconsent.css";
+
+/**
+ * Equal-weight buttons.
+ *
+ * The library's stock theme renders "reject" as a grey secondary button next to
+ * a coloured primary — exactly the colour nudging supervisory authorities treat
+ * as a dark pattern. Tie the secondary button to the primary one so both look
+ * identical, and keep it that way even when a host themes the primary colour.
+ */
+#cc-main {
+    --cc-btn-secondary-bg: var(--cc-btn-primary-bg);
+    --cc-btn-secondary-color: var(--cc-btn-primary-color);
+    --cc-btn-secondary-border-color: var(--cc-btn-primary-border-color);
+    --cc-btn-secondary-hover-bg: var(--cc-btn-primary-hover-bg);
+    --cc-btn-secondary-hover-color: var(--cc-btn-primary-hover-color);
+    --cc-btn-secondary-hover-border-color: var(--cc-btn-primary-hover-border-color);
+}
+
+/**
+ * Consent gate for third-party embeds.
+ *
+ * Deliberately framework-free and themable through --cc-embed-* so it works in
+ * a Tailwind project and a plain-CSS one alike.
+ */
+.cc-embed {
+    position: relative;
+}
+
+.cc-embed__notice {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: var(--cc-embed-padding, 1.5rem);
+    background: var(--cc-embed-bg, #f1f1f1);
+    color: var(--cc-embed-color, #1a1a1a);
+    border: var(--cc-embed-border, 1px solid rgb(0 0 0 / 0.1));
+    border-radius: var(--cc-embed-radius, 0.25rem);
+    font-family: var(--cc-embed-font-family, inherit);
+    font-size: var(--cc-embed-font-size, 0.875rem);
+    line-height: 1.5;
+    text-align: left;
+}
+
+.cc-embed__title {
+    margin: 0;
+    font-weight: 600;
+}
+
+.cc-embed__text {
+    margin: 0;
+    max-width: 60ch;
+}
+
+.cc-embed__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.cc-embed__btn {
+    padding: 0.5rem 1rem;
+    background: var(--cc-embed-btn-bg, #1a1a1a);
+    color: var(--cc-embed-btn-color, #fff);
+    border: 1px solid var(--cc-embed-btn-bg, #1a1a1a);
+    border-radius: var(--cc-embed-radius, 0.25rem);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.cc-embed__btn:hover {
+    opacity: 0.85;
+}
+
+.cc-embed__link {
+    color: inherit;
+    text-decoration: underline;
+}
+
+/* Keep the embed in the box the placeholder occupied. */
+.cc-embed[data-cc-embed-loaded] > iframe,
+.cc-embed[data-cc-embed-loaded] > * > iframe {
+    max-width: 100%;
+}

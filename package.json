@@ -1,0 +1,15 @@
+{
+    "name": "kirby-consent",
+    "private": true,
+    "version": "0.1.0",
+    "type": "module",
+    "description": "Build tooling for the prebuilt assets/consent.{js,css} bundle",
+    "scripts": {
+        "build": "node build.mjs",
+        "watch": "node build.mjs --watch"
+    },
+    "devDependencies": {
+        "esbuild": "^0.25.0",
+        "vanilla-cookieconsent": "^3.1.0"
+    }
+}

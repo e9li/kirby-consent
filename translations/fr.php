@@ -32,11 +32,11 @@ return [
         ],
         'analytics' => [
             'title' => 'Statistiques',
-            'description' => 'Nous aident à comprendre comment le site est utilisé afin de l’améliorer. L’analyse passe par Google Analytics, ce qui peut transférer des données à Google.',
+            'description' => 'Nous aident à comprendre comment le site est utilisé afin de l’améliorer. Les services d’analyse que nous utilisons peuvent transmettre des données à leurs fournisseurs.',
         ],
         'marketing' => [
             'title' => 'Marketing',
-            'description' => 'Servent à mesurer l’audience publicitaire et à diffuser de la publicité personnalisée, par exemple via Google Ads. Ces cookies transmettent des données à des partenaires publicitaires.',
+            'description' => 'Servent à mesurer l’audience publicitaire et à diffuser de la publicité personnalisée. Des données peuvent être transmises à des partenaires publicitaires.',
         ],
         'external' => [
             'title' => 'Contenus externes',

@@ -38,6 +38,9 @@ App::plugin('e9li/kirby-consent', [
         // Emit Google Consent Mode v2 defaults in <head>.
         'consentMode' => true,
 
+        // Optional per-request Content Security Policy nonce for script tags.
+        'cspNonce' => null,
+
         // Cookies removed when a category is withdrawn. `*` is a wildcard.
         'autoClear' => [
             'analytics' => ['_ga*', '_gid', '_gat*'],

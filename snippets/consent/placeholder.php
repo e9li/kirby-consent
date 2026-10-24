@@ -27,12 +27,20 @@ if (trim($embed) === '') {
 
 $strings = Consent::strings();
 $category = $category ?? 'external';
-$service = $service ?? $strings['ui']['placeholderService'];
+$service = ($service ?? '') !== '' ? $service : $strings['ui']['placeholderService'];
+$categories = Consent::categories();
 
-// If the category is not configured, gating it would hide the embed forever.
-if (in_array($category, Consent::categories(), true) === false) {
+// A site without optional categories intentionally renders embeds directly.
+if ($categories === []) {
     echo $embed;
     return;
+}
+
+// Never fail open on a typo or a category that is not available in the banner.
+if (is_string($category) === false || in_array($category, $categories, true) === false) {
+    throw new InvalidArgumentException(
+        'kirby-consent: placeholder category must be enabled in `categories`'
+    );
 }
 
 $title = str_replace('{service}', $service, $strings['ui']['placeholderTitle']);
@@ -57,7 +65,7 @@ $privacyUrl = Consent::pageUrl('privacyPage');
             </button>
         </div>
         <?php if ($privacyUrl !== null): ?>
-            <a class="cc-embed__link" href="<?= $privacyUrl ?>">
+            <a class="cc-embed__link" href="<?= esc($privacyUrl) ?>">
                 <?= esc($strings['ui']['privacyLabel']) ?>
             </a>
         <?php endif; ?>

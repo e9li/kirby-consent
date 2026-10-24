@@ -43,6 +43,7 @@ function boot(cfg) {
     };
 
     CookieConsent.run({
+        mode: cfg.mode === "optout" ? "opt-out" : "opt-in",
         revision: cfg.revision,
         cookie: {
             expiresAfterDays: cfg.expiresAfterDays,
@@ -73,14 +74,15 @@ function boot(cfg) {
         onChange: ({ changedCategories }) => {
             updateConsentMode(cfg);
 
-            // A withdrawn category must not leave a live third-party embed on
-            // the page, and there is no way to un-embed an iframe that already
-            // phoned home. Reload instead.
+            // Withdrawing consent cannot unload JavaScript that already ran or
+            // disconnect an iframe that already phoned home. Reload for every
+            // withdrawn optional category so gated code stays inactive until
+            // the visitor accepts it again.
             const withdrawn = changedCategories.filter(
                 (category) => !CookieConsent.acceptedCategory(category)
             );
 
-            if (withdrawn.some(hasLoadedEmbed)) {
+            if (withdrawn.length > 0) {
                 window.location.reload();
                 return;
             }
@@ -163,16 +165,6 @@ function embeds(category) {
         : "[data-cc-embed]";
 
     return document.querySelectorAll(selector);
-}
-
-function hasLoadedEmbed(category) {
-    for (const wrapper of embeds(category)) {
-        if (wrapper.hasAttribute("data-cc-embed-loaded")) {
-            return true;
-        }
-    }
-
-    return false;
 }
 
 function activateAcceptedEmbeds() {

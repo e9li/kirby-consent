@@ -9,6 +9,10 @@ use E9li\Consent\Consent;
  * snippet('consent/settings-link', ['class' => 'underline hover:no-underline'])
  */
 
+if (Consent::hasOptionalCategories() === false) {
+    return;
+}
+
 $strings = Consent::strings();
 ?>
 <button

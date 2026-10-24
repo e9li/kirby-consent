@@ -11,15 +11,17 @@ use E9li\Consent\Consent;
  */
 
 $css = Consent::assetUrl('consent.css');
+$nonce = Consent::cspNonce();
+$nonceAttribute = $nonce !== null ? ' nonce="' . esc($nonce) . '"' : '';
 
 if ($css !== null): ?>
-<link rel="stylesheet" href="<?= $css ?>">
+<link rel="stylesheet" href="<?= esc($css) ?>">
 <?php endif; ?>
 <?php if (Consent::option('consentMode') === true):
     $signals = Consent::defaultSignals();
     $signals['wait_for_update'] = 500;
     ?>
-<script>
+<script<?= $nonceAttribute ?>>
     window.dataLayer = window.dataLayer || [];
 
     function gtag() {

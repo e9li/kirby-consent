@@ -32,11 +32,11 @@ return [
         ],
         'analytics' => [
             'title' => 'Statistik',
-            'description' => 'Hilft uns zu verstehen, wie die Website genutzt wird, damit wir sie verbessern können. Die Auswertung erfolgt über Google Analytics; dabei können Daten an Google übermittelt werden.',
+            'description' => 'Hilft uns zu verstehen, wie die Website genutzt wird, damit wir sie verbessern können. Die Auswertung erfolgt über die von uns eingesetzten Analysedienste; dabei können Daten an deren Anbieter übermittelt werden.',
         ],
         'marketing' => [
             'title' => 'Marketing',
-            'description' => 'Wird für Reichweitenmessung von Werbung und für personalisierte Werbung eingesetzt, etwa über Google Ads. Diese Cookies geben Daten an Werbepartner weiter.',
+            'description' => 'Wird für die Reichweitenmessung von Werbung und für personalisierte Werbung eingesetzt. Dabei können Daten an Werbepartner weitergegeben werden.',
         ],
         'external' => [
             'title' => 'Externe Inhalte',

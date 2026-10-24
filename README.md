@@ -5,21 +5,23 @@ placeholders and **Google Consent Mode v2** — built on
 [vanilla-cookieconsent](https://github.com/orestbida/cookieconsent) (MIT),
 self-hosted, no subscription, no external CMP service.
 
-Compliance-correct by default:
+Consent-first defaults:
 
 - equal-weight *Accept all* / *Reject all* on the first layer, no colour nudging
-- nothing non-essential loads before consent (`type="text/plain"` gating), so no
-  third-party request happens on a first visit
+- scripts and embeds explicitly marked as non-essential stay inert before consent
 - granular categories, nothing pre-ticked in opt-in mode
 - permanent settings link for withdrawal, `revision` support for re-consent
 - 12-month consent lifetime by default
-- consent record (id, timestamp, per-category choice, revision) in the cookie
+- consent record (id, timestamp, per-category choice, revision) in the browser
+  cookie; no server-side consent log
 
 > Not legal advice. The shipped copy is written to the criteria of the German
 > DSK *Orientierungshilfe Telemedien* and VG Hannover (03/2025); have the final
 > privacy-policy wording reviewed.
 
 ## Installation
+
+Requires Kirby 5.2+ and PHP 8.2–8.5.
 
 ```
 composer require e9li/kirby-consent
@@ -107,12 +109,26 @@ Or pass markup instead of using a slot:
 ]) ?>
 ```
 
-The visitor gets *Load content once* and *Always load external content*. If the
-category is later withdrawn, the page reloads — an iframe that already connected
-cannot be un-embedded.
+The visitor gets *Load content once* and *Always load external content*. If any
+optional category is later withdrawn, the page reloads. This is necessary for
+both iframes and scripts: an iframe that already connected cannot be un-embedded,
+and JavaScript that already ran cannot be reliably unloaded.
 
-If you pass a `category` that is not in your `categories` option, the snippet
-renders the embed ungated rather than hiding it forever.
+The placeholder `category` must be listed in your `categories` option. Invalid or
+unavailable categories throw a configuration exception instead of silently
+loading third-party content without consent.
+
+### Iframes in editor content
+
+`gateKirbytext` is enabled by default. The `kirbytext:after` hook wraps external
+iframes that editors paste into content, including uppercase tags, unquoted
+`src` attributes and `srcdoc` iframes. Same-origin and relative `src` iframes are
+left alone unless they also use `srcdoc`.
+
+The gate uses `gateKirbytextCategory` (default `external`), which must be enabled
+in `categories`. To disable automatic editor-content gating, set
+`gateKirbytext` to `false`. Templates and dynamically inserted content still
+need the placeholder snippet or their own consent integration.
 
 ## Options
 
@@ -121,16 +137,19 @@ All under `e9li.kirby-consent`:
 | Option | Default | |
 |---|---|---|
 | `mode` | `'optin'` | `'optin'` = EU/DE strict. `'optout'` = CH-only sites: optional categories start enabled and the Consent Mode defaults start granted. **Not lawful for any site addressing the EU.** |
-| `categories` | `['analytics', 'marketing', 'external']` | Optional categories in display order. `necessary` is implicit. |
+| `categories` | `['analytics', 'marketing', 'external']` | Optional categories in display order. `necessary` is implicit. Unknown names throw an exception; duplicates are removed. With an empty list, the banner, settings link and embed gate are disabled. |
 | `privacyPage` | `'datenschutz'` | Page id; the current language's slug is resolved automatically. |
 | `imprintPage` | `'impressum'` | Page id, or `null` to omit. |
 | `expiresAfterDays` | `365` | Consent lifetime. |
 | `revision` | `1` | Bump to invalidate existing consent. |
 | `layout` / `position` | `'box'` / `'bottom right'` | |
 | `darkmode` | `false` | |
-| `orthography` | `'de-de'` | `'de-ch'` switches German to Swiss spelling and Swiss legal references. |
+| `orthography` | `'de-de'` | `'de-ch'` switches German to Swiss spelling (`ss` instead of `ß`). |
 | `consentMode` | `true` | Emit Google Consent Mode v2 defaults. |
+| `cspNonce` | `null` | Optional per-request nonce added to the plugin's script tags. |
 | `autoClear` | `_ga*`, `_gcl*`, … | Cookies deleted when a category is withdrawn. `*` is a wildcard. |
+| `gateKirbytext` | `true` | Gate external iframes in editor content. |
+| `gateKirbytextCategory` | `'external'` | Consent category for those iframes; must be enabled in `categories`. |
 | `translations` | `[]` | Per-language string overrides, deep-merged. |
 
 ### Categories and Consent Mode signals
@@ -157,8 +176,19 @@ All under `e9li.kirby-consent`:
 ],
 ```
 
-Shipped languages: `de`, `de-ch`, `en`, `fr`, `it`. Unknown languages fall back
-to `en`.
+Shipped languages: `de`, `de-ch`, `en`, `fr`, `it`, `ru`. Language codes are
+matched case-insensitively, `_` and `-` are equivalent, and regional variants
+fall back to their base language (for example `en-GB` → `en`). Unknown languages
+fall back to English. Set `orthography` to `de-ch` to use Swiss spelling for any
+German language.
+
+## Content Security Policy
+
+If your site's CSP requires nonces, set `cspNonce` to the same cryptographically
+random, per-request nonce used in the `Content-Security-Policy` header. The head
+bootstrap, JSON configuration and external bundle script then receive that
+nonce. Never reuse a fixed nonce across requests. Gated scripts and embed scripts
+also need to retain a valid nonce when your application creates them.
 
 ## Theming
 
@@ -213,6 +243,13 @@ npm run watch
 
 `assets/` is committed — it is what consuming sites load.
 
+## Support this project
+
+[![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-ea4aaa)](https://github.com/sponsors/e9li)
+
+This project is free and open source, including for commercial use. If it creates value for you or your business, please consider [sponsoring its development](https://github.com/sponsors/e9li). Sponsorship helps fund ongoing maintenance and future improvements.
+
 ## License
 
-MIT
+MIT — see `LICENSE`. The bundled vanilla-cookieconsent license is included in
+`THIRD_PARTY_NOTICES.md`.

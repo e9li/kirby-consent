@@ -32,11 +32,11 @@ return [
         ],
         'analytics' => [
             'title' => 'Statistics',
-            'description' => 'Helps us understand how the website is used so we can improve it. Analysis is done via Google Analytics, which may transfer data to Google.',
+            'description' => 'Helps us understand how the website is used so we can improve it. The analytics services we use may transfer data to their providers.',
         ],
         'marketing' => [
             'title' => 'Marketing',
-            'description' => 'Used to measure advertising reach and to deliver personalised advertising, for example via Google Ads. These cookies share data with advertising partners.',
+            'description' => 'Used to measure advertising reach and deliver personalised advertising. Data may be shared with advertising partners.',
         ],
         'external' => [
             'title' => 'External content',

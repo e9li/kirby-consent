@@ -2,6 +2,7 @@
 
 namespace E9li\Consent;
 
+use InvalidArgumentException;
 use Kirby\Cms\App;
 use Kirby\Toolkit\A;
 
@@ -56,7 +57,32 @@ class Consent
         $configured = static::option('categories', []);
         $known = array_keys(static::SIGNALS);
 
-        return array_values(array_intersect($known, (array) $configured));
+        if (is_array($configured) === false) {
+            throw new InvalidArgumentException('kirby-consent: `categories` must be an array');
+        }
+
+        $categories = [];
+
+        foreach ($configured as $category) {
+            if (is_string($category) === false || in_array($category, $known, true) === false) {
+                $name = is_scalar($category) ? (string) $category : gettype($category);
+
+                throw new InvalidArgumentException(
+                    'kirby-consent: unknown category `' . $name . '`; available: ' . implode(', ', $known)
+                );
+            }
+
+            if (in_array($category, $categories, true) === false) {
+                $categories[] = $category;
+            }
+        }
+
+        return $categories;
+    }
+
+    public static function hasOptionalCategories(): bool
+    {
+        return static::categories() !== [];
     }
 
     /**
@@ -79,6 +105,16 @@ class Consent
         return App::instance()->plugin(static::PLUGIN)?->asset($filename)?->url();
     }
 
+    /**
+     * Optional per-request CSP nonce for the plugin's script tags.
+     */
+    public static function cspNonce(): ?string
+    {
+        $nonce = static::option('cspNonce');
+
+        return is_string($nonce) === true && $nonce !== '' ? $nonce : null;
+    }
+
     public static function languageCode(): string
     {
         return App::instance()->language()?->code() ?? 'en';
@@ -92,17 +128,24 @@ class Consent
     protected static function translationFile(string $code): string
     {
         $dir = dirname(__DIR__) . '/translations';
+        $code = strtolower(str_replace('_', '-', $code));
+        $base = explode('-', $code)[0];
 
         $candidates = [];
 
-        if ($code === 'de' && static::option('orthography') === 'de-ch') {
+        if ($base === 'de' && static::option('orthography') === 'de-ch') {
             $candidates[] = 'de-ch';
         }
 
         $candidates[] = $code;
+
+        if ($base !== $code) {
+            $candidates[] = $base;
+        }
+
         $candidates[] = 'en';
 
-        foreach ($candidates as $candidate) {
+        foreach (array_unique($candidates) as $candidate) {
             $file = $dir . '/' . $candidate . '.php';
 
             if (is_file($file) === true) {
@@ -143,11 +186,11 @@ class Consent
         $links = [];
 
         if ($privacyUrl !== null) {
-            $links[] = '<a href="' . $privacyUrl . '">' . $strings['ui']['privacyLabel'] . '</a>';
+            $links[] = '<a href="' . esc($privacyUrl) . '">' . esc($strings['ui']['privacyLabel']) . '</a>';
         }
 
         if ($imprintUrl !== null) {
-            $links[] = '<a href="' . $imprintUrl . '">' . $strings['ui']['imprintLabel'] . '</a>';
+            $links[] = '<a href="' . esc($imprintUrl) . '">' . esc($strings['ui']['imprintLabel']) . '</a>';
         }
 
         $sections = [
@@ -177,7 +220,7 @@ class Consent
             // read as German inside a sentence ("in unserer Datenschutz").
             $moreInfo = str_replace(
                 '{privacy}',
-                '<a href="' . $privacyUrl . '">' . $strings['ui']['privacyProse'] . '</a>',
+                '<a href="' . esc($privacyUrl) . '">' . esc($strings['ui']['privacyProse']) . '</a>',
                 $moreInfo
             );
         } else {
@@ -318,9 +361,9 @@ class Consent
 
     public static function serviceName(string $url): string
     {
-        $host = parse_url($url, PHP_URL_HOST) ?: '';
+        $host = strtolower(parse_url($url, PHP_URL_HOST) ?: '');
         $path = parse_url($url, PHP_URL_PATH) ?: '';
-        $needle = $host . $path;
+        $needle = strtolower($host . $path);
 
         foreach (static::SERVICES as $match => $name) {
             if (str_contains($needle, $match) === true) {
@@ -340,37 +383,64 @@ class Consent
      */
     public static function gateIframes(string $html): string
     {
-        if (str_contains($html, '<iframe') === false) {
+        if (stripos($html, '<iframe') === false) {
+            return $html;
+        }
+
+        $categories = static::categories();
+
+        // A site without optional categories does not need a consent gate.
+        if ($categories === []) {
             return $html;
         }
 
         $category = static::option('gateKirbytextCategory', 'external');
 
-        if (in_array($category, static::categories(), true) === false) {
-            return $html;
+        if (is_string($category) === false || array_key_exists($category, static::SIGNALS) === false) {
+            throw new InvalidArgumentException('kirby-consent: unknown `gateKirbytextCategory`');
         }
 
-        $siteHost = parse_url(App::instance()->url(), PHP_URL_HOST);
+        if (in_array($category, $categories, true) === false) {
+            throw new InvalidArgumentException(
+                'kirby-consent: `gateKirbytextCategory` must be enabled in `categories`'
+            );
+        }
+
+        $siteHost = strtolower(parse_url(App::instance()->url(), PHP_URL_HOST) ?: '');
 
         return preg_replace_callback(
-            '#<iframe\b[^>]*>(?:.*?</iframe>)?#is',
+            "#<iframe\b(?:[^>\"']|\"[^\"]*\"|'[^']*')*>(?:.*?</iframe>)?#is",
             function (array $match) use ($category, $siteHost): string {
                 $iframe = $match[0];
+                $hasSrcdoc = preg_match('#\bsrcdoc\s*=#i', $iframe) === 1;
+                $hasSrc = preg_match(
+                    '#\bsrc\s*=\s*(?:["\']([^"\']+)["\']|([^\s>]+))#i',
+                    $iframe,
+                    $src
+                ) === 1;
 
-                if (preg_match('#\bsrc\s*=\s*["\']([^"\']+)["\']#i', $iframe, $src) !== 1) {
+                if ($hasSrc === false && $hasSrcdoc === false) {
                     return $iframe;
                 }
 
-                $host = parse_url($src[1], PHP_URL_HOST);
+                $source = $hasSrc
+                    ? (($src[1] ?? '') !== '' ? $src[1] : ($src[2] ?? ''))
+                    : '';
+                $host = $source !== '' ? parse_url($source, PHP_URL_HOST) : null;
 
-                // Same-origin and relative embeds are ours to serve.
-                if ($host === null || $host === $siteHost) {
+                if (is_string($host) === true) {
+                    $host = strtolower($host);
+                }
+
+                // Same-origin and relative embeds are ours to serve. `srcdoc`
+                // still gets gated because it can contain third-party content.
+                if ($hasSrcdoc === false && ($host === null || $host === $siteHost)) {
                     return $iframe;
                 }
 
                 return snippet('consent/placeholder', [
                     'category' => $category,
-                    'service' => static::serviceName($src[1]),
+                    'service' => $source !== '' ? static::serviceName($source) : null,
                     'html' => $iframe,
                 ], return: true);
             },
